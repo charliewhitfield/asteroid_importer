@@ -47,8 +47,8 @@ var _status_labels := []
 var _function_index := -1
 var _thread := Thread.new()
 
-func init() -> void:
-	ProjectBuilder.connect("objects_instantiated", self, "_on_objects_instantiated")
+func extension_init() -> void:
+	ProjectBuilder.connect("project_objects_instantiated", self, "_on_objects_instantiated")
 	Global.connect("main_inited", self, "_on_main_inited")
 
 func _on_objects_instantiated() -> void:
