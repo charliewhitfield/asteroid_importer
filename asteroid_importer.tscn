@@ -1,0 +1,47 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://asteroid_importer/asteroid_importer.gd" type="Script" id=1]
+
+
+[node name="AsteroidImporter" type="PopupPanel"]
+pause_mode = 2
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -438.5
+margin_top = -315.0
+margin_right = 438.5
+margin_bottom = 315.0
+popup_exclusive = true
+script = ExtResource( 1 )
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+margin_left = -434.5
+margin_top = 4.0
+margin_right = 434.5
+margin_bottom = 626.0
+alignment = 1
+
+[node name="Header" type="Label" parent="VBox"]
+margin_top = 8.0
+margin_right = 692.0
+margin_bottom = 107.0
+text = "Asteroid Importer
+
+You will need to add source data files to use this. For details, see ivoyager/data/solar_system/_BINARIES_README.txt.
+Output is in user://bigdata_binary and needs to be manually added to the project folder.
+
+"
+align = 1
+
+[node name="Grid" type="GridContainer" parent="VBox"]
+margin_left = 346.0
+margin_top = 111.0
+margin_right = 346.0
+margin_bottom = 111.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+columns = 3
