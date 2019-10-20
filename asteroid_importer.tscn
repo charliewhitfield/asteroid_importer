@@ -2,7 +2,6 @@
 
 [ext_resource path="res://asteroid_importer/asteroid_importer.gd" type="Script" id=1]
 
-
 [node name="AsteroidImporter" type="PopupPanel"]
 pause_mode = 2
 anchor_left = 0.5
@@ -31,8 +30,8 @@ margin_right = 692.0
 margin_bottom = 107.0
 text = "Asteroid Importer
 
-You will need to add source data files to use this. For details, see ivoyager/data/solar_system/_BINARIES_README.txt.
-Output is in user://bigdata_binary and needs to be manually added to the project folder.
+You will need to add source data files to use this. For details, see asteroid_importer/README.md.
+Output is in user://bigdata_binaries and needs to be added manually to the project folder.
 
 "
 align = 1

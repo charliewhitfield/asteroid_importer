@@ -2,9 +2,8 @@
 # I, Voyager
 # Copyright (c) 2017-2019 Charlie Whitfield
 # *****************************************************************************
-# cntr-shift-A at splash screen to make this popup; Global.allow_dev_tools
-# must be set. Converts source files to binaries used at runtime. See
-# ivoyager/data/solar_system/_BINARIES_README.txt for information.
+# Converts source file data to binaries used at runtime. See README.md for
+# info.
 
 extends PopupPanel
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
@@ -41,25 +40,24 @@ const GRID_LAYOUT := [
 	["_revise_proper", "Revise Proper Orbits", "Revise orbital elements to proper where available."],
 	["_revise_trojans", "Revise Trojan Orbits", "Revise orbital elements to trojan proper where available."],
 	["_make_binary_files", "Make Binaries", "Make binary files from pool."],
-	["_start_over", "Start Over", "Clear data and start over."]]
-	
+	["_start_over", "Start Over", "Clear data and start over."]
+]
+
 var _status_labels := []
 var _function_index := -1
 var _thread := Thread.new()
 
 func init() -> void:
 	ProjectBuilder.connect("objects_instantiated", self, "_on_objects_instantiated")
-	Global.connect("inited", self, "_on_global_inited")
+	Global.connect("main_inited", self, "_on_main_inited")
 
 func _on_objects_instantiated() -> void:
-	Global.objects.MainMenu.make_button("Ast. Import", 490, true, false, self, "popup")
+	Global.objects.MainMenu.make_button("Ast. Import", 290, true, false, self, "_open")
 
-func _on_global_inited() -> void:
+func _on_main_inited() -> void:
 	Global.objects.GUITop.add_child(self)
 
 func _ready() -> void:
-	Global.objects.Main.add_thread(_thread)
-	Global.objects.Main.require_stop(self)
 	var layout_index := 0
 	while layout_index < GRID_LAYOUT.size():
 		var layout_item: Array = GRID_LAYOUT[layout_index] 
@@ -83,6 +81,10 @@ func _ready() -> void:
 	close_button.connect("pressed", self, "_close")
 	close_button.text = "Close"
 	$VBox/Grid.add_child(close_button)
+
+func _open() -> void:
+	Global.objects.Main.require_stop(self)
+	popup()
 
 func _run_function(layout_index: int) -> void:
 	_function_index = layout_index
@@ -397,9 +399,8 @@ func _start_over() -> void:
 		_status_labels[i].text = ""
 
 func _close() -> void:
+	hide()
 	Global.objects.Main.allow_run(self)
-	queue_free()
-
 
 func _update_status(message) -> void:
 	yield(get_tree(), "idle_frame")
