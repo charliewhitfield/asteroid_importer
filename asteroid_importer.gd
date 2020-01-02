@@ -29,7 +29,7 @@ extends PopupPanel
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
 const EXTENSION_NAME := "AsteroidImporter"
 const EXTENSION_VERSION := "dev"
-const EXTENSION_YMD_INT := 20191029
+const EXTENSION_VERSION_YMD := 20191029
 
 const DEBUG_PRINT_BINARY_TEXT := false
 const REJECT_999 := false # reject mag "-9.99"; if false, accept but change to "99"
