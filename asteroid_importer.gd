@@ -46,7 +46,7 @@ const TROJAN_PROPER_ELEMENTS_FILE := "tro.syn"
 const ASTEROID_NAMES_FILE := "discover.tab"
 const STATUS_INTERVAL := 20000
 
-onready var _asteroid_group_data: Array = Global.table_data.asteroid_group_data
+onready var _asteroid_group_data: Array = Global.tables.asteroid_group_data
 onready var _binary_file_magnitudes: Array = MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
 
 var _asteroid_elements := PoolRealArray()
