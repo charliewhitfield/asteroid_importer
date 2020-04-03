@@ -26,6 +26,9 @@
 # Converts source file data to binaries used at runtime. See README.md.
 
 extends PopupPanel
+
+const math := preload("res://ivoyager/static/math.gd") # not math; issue #33531
+
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
 const EXTENSION_NAME := "AsteroidImporter"
 const EXTENSION_VERSION := "dev"
@@ -209,7 +212,7 @@ func _revise_proper() -> void:
 				else:
 					mag_str = "99"
 			var magnitude := float(mag_str)
-			var proper_a := Math.au2km(float(line_array[2]))
+			var proper_a := math.au2km(float(line_array[2]))
 			var proper_e := float(line_array[3])
 			var proper_i := asin(float(line_array[4]))
 			var proper_n := deg2rad(float(line_array[5])) / 365.25 # deg/yr -> rad/day
@@ -266,7 +269,7 @@ func _revise_trojans() -> void:
 			else:
 				mag_str = "99"
 		var magnitude := float(mag_str)
-		var d := Math.au2km(float(line_array[2]))
+		var d := math.au2km(float(line_array[2]))
 		var D := deg2rad(float(line_array[3]))
 		var f := deg2rad(float(line_array[4])) / 365.25 # deg/yr -> rad/day
 		var proper_e := float(line_array[5])
@@ -458,7 +461,7 @@ func _read_astdys_cat_file(data_file: String) -> void:
 		astdys2_name = astdys2_name.replace("'", "")
 		_astdys2_lookup[astdys2_name] = _index
 		_asteroid_names.append(astdys2_name)
-		_asteroid_elements.append(Math.au2km(float(line_array[2]))) # a
+		_asteroid_elements.append(math.au2km(float(line_array[2]))) # a
 		_asteroid_elements.append(float(line_array[3])) # e
 		_asteroid_elements.append(deg2rad(float(line_array[4]))) # i
 		_asteroid_elements.append(deg2rad(float(line_array[5]))) # Om
