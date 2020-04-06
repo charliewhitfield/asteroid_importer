@@ -28,6 +28,7 @@
 extends PopupPanel
 
 const math := preload("res://ivoyager/static/math.gd") # not math; issue #33531
+const file_utils := preload("res://ivoyager/static/file_utils.gd")
 
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
 const EXTENSION_NAME := "AsteroidImporter"
@@ -78,10 +79,10 @@ func extension_init() -> void:
 	Global.connect("main_inited", self, "_on_main_inited")
 
 func _on_objects_instantiated() -> void:
-	Global.objects.MainMenu.make_button("Ast. Import", 290, true, false, self, "_open")
+	Global.program.MainMenu.make_button("Ast. Import", 290, true, false, self, "_open")
 
 func _on_main_inited() -> void:
-	Global.objects.GUITop.add_child(self)
+	Global.program.GUITop.add_child(self)
 
 func _ready() -> void:
 	var layout_index := 0
@@ -109,7 +110,7 @@ func _ready() -> void:
 	$VBox/Grid.add_child(close_button)
 
 func _open() -> void:
-	Global.objects.Main.require_stop(self)
+	Global.program.Main.require_stop(self)
 	popup()
 
 func _run_function(layout_index: int) -> void:
@@ -369,7 +370,7 @@ func _make_binary_files() -> void:
 	
 	# Write binaries
 	print("Writing binaries to ", WRITE_BINARIES_DIR)
-	FileHelper.make_or_clear_dir(WRITE_BINARIES_DIR)
+	file_utils.make_or_clear_dir(WRITE_BINARIES_DIR)
 	var asteroid_group := AsteroidGroup.new()
 	for file_group in index_dict:
 		var is_trojans: bool = trojan_file_groups.has(file_group)
@@ -426,7 +427,7 @@ func _start_over() -> void:
 
 func _close() -> void:
 	hide()
-	Global.objects.Main.allow_run(self)
+	Global.program.Main.allow_run(self)
 
 func _update_status(message) -> void:
 	yield(get_tree(), "idle_frame")
