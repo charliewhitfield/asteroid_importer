@@ -27,8 +27,8 @@
 
 extends PopupPanel
 
-const math := preload("res://ivoyager/static/math.gd") # not math; issue #33531
-const conv := preload("res://ivoyager/static/conv.gd")
+const math := preload("res://ivoyager/static/math.gd")
+const unit_defs := preload("res://ivoyager/static/unit_defs.gd")
 const file_utils := preload("res://ivoyager/static/file_utils.gd")
 
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
@@ -214,10 +214,10 @@ func _revise_proper() -> void:
 				else:
 					mag_str = "99"
 			var magnitude := float(mag_str)
-			var proper_a := float(line_array[2]) * conv.AU
+			var proper_a := float(line_array[2]) * unit_defs.AU
 			var proper_e := float(line_array[3])
 			var proper_i := asin(float(line_array[4]))
-			var proper_n := conv.from(float(line_array[5]), "deg/a")
+			var proper_n := unit_defs.conv(float(line_array[5]), "deg/a")
 			_asteroid_elements[index * N_ELEMENTS] = proper_a
 			if not secular_resonance:
 				_asteroid_elements[index * N_ELEMENTS + 1] = proper_e
@@ -271,9 +271,9 @@ func _revise_trojans() -> void:
 			else:
 				mag_str = "99"
 		var magnitude := float(mag_str)
-		var d := float(line_array[2]) * conv.AU
-		var D := float(line_array[3]) * conv.DEG
-		var f := conv.from(float(line_array[4]), "deg/a")
+		var d := float(line_array[2]) * unit_defs.AU
+		var D := float(line_array[3]) * unit_defs.DEG
+		var f := unit_defs.conv(float(line_array[4]), "deg/a")
 		var proper_e := float(line_array[5])
 		var proper_i := asin(float(line_array[7]))
 		var l_point: String = line_array[9] # either "4" or "5"
