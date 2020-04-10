@@ -22,13 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # *****************************************************************************
-#
-# Converts source file data to binaries used at runtime. See README.md.
+# Packs source file data to binaries used at runtime. See README.md. Units in
+# the source files are: au, deg, deg/yr (last update, but verify!). We convert
+# these to au, rad, rad/yr in the packed binaries. Convert from these when
+# importing.
 
 extends PopupPanel
 
 const math := preload("res://ivoyager/static/math.gd")
-const unit_defs := preload("res://ivoyager/static/unit_defs.gd")
 const file_utils := preload("res://ivoyager/static/file_utils.gd")
 
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
@@ -214,10 +215,10 @@ func _revise_proper() -> void:
 				else:
 					mag_str = "99"
 			var magnitude := float(mag_str)
-			var proper_a := float(line_array[2]) * unit_defs.AU
+			var proper_a := float(line_array[2]) # in au
 			var proper_e := float(line_array[3])
-			var proper_i := asin(float(line_array[4]))
-			var proper_n := unit_defs.conv(float(line_array[5]), "deg/a")
+			var proper_i := asin(float(line_array[4])) # file has sin(i)
+			var proper_n := deg2rad(float(line_array[5])) # now rad/yr
 			_asteroid_elements[index * N_ELEMENTS] = proper_a
 			if not secular_resonance:
 				_asteroid_elements[index * N_ELEMENTS + 1] = proper_e
@@ -271,11 +272,11 @@ func _revise_trojans() -> void:
 			else:
 				mag_str = "99"
 		var magnitude := float(mag_str)
-		var d := float(line_array[2]) * unit_defs.AU
-		var D := float(line_array[3]) * unit_defs.DEG
-		var f := unit_defs.conv(float(line_array[4]), "deg/a")
+		var d := float(line_array[2]) # au
+		var D := deg2rad(float(line_array[3])) # deg -> rad
+		var f := deg2rad(float(line_array[4])) # deg/y -> rad/y
 		var proper_e := float(line_array[5])
-		var proper_i := asin(float(line_array[7]))
+		var proper_i := asin(float(line_array[7])) # file has sin(i)
 		var l_point: String = line_array[9] # either "4" or "5"
 		# Regular propers
 		_asteroid_elements[index * N_ELEMENTS + 1] = proper_e
@@ -330,13 +331,14 @@ func _make_binary_files() -> void:
 				index_dict[info.group + "5"][mag_str] = []
 
 	var all_criteria := {}
+	var au := UnitDefs.AU
 	for info in _asteroid_group_data:
 		var group: String = info.group
 		all_criteria[group] = {
-			min_q = info.min_q if info.has("min_q") else 0.0,
-			max_q = info.max_q if info.has("max_q") else INF,
-			min_a = info.min_a if info.has("min_a") else 0.0,
-			max_a = info.max_a if info.has("max_a") else INF
+			min_q = info.min_q / au if info.has("min_q") else 0.0,
+			max_q = info.max_q / au if info.has("max_q") else INF,
+			min_a = info.min_a / au if info.has("min_a") else 0.0,
+			max_a = info.max_a / au if info.has("max_a") else INF
 		}
 	var status_index := STATUS_INTERVAL
 	for index in range(tot_indexes):
@@ -463,7 +465,7 @@ func _read_astdys_cat_file(data_file: String) -> void:
 		astdys2_name = astdys2_name.replace("'", "")
 		_astdys2_lookup[astdys2_name] = _index
 		_asteroid_names.append(astdys2_name)
-		_asteroid_elements.append(math.au2km(float(line_array[2]))) # a
+		_asteroid_elements.append(float(line_array[2])) # a (in au)
 		_asteroid_elements.append(float(line_array[3])) # e
 		_asteroid_elements.append(deg2rad(float(line_array[4]))) # i
 		_asteroid_elements.append(deg2rad(float(line_array[5]))) # Om
