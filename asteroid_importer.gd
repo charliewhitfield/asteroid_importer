@@ -52,7 +52,8 @@ const TROJAN_PROPER_ELEMENTS_FILE := "tro.syn"
 const ASTEROID_NAMES_FILE := "discover.tab"
 const STATUS_INTERVAL := 20000
 
-onready var _asteroid_group_data: Array = Global.tables.asteroid_group_data
+onready var _ag_data: Array = Global.tables.AsteroidGroupData
+onready var _ag_fields: Dictionary = Global.table_fields.AsteroidGroupFields
 onready var _binary_file_magnitudes: Array = MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
 
 var _asteroid_elements := PoolRealArray()
@@ -313,32 +314,33 @@ func _make_binary_files() -> void:
 		mags.append(float(mag_str))
 	var trojan_group := {}
 	var trojan_file_groups := []
-	for info in _asteroid_group_data:
-		var is_trojans: bool = info.has("trojan_of")
-		trojan_group[info.group] = is_trojans
+	for row_data in _ag_data:
+		var is_trojans := bool(row_data[_ag_fields.trojan_of])
+		var group: String = row_data[_ag_fields.group]
+		trojan_group[group] = is_trojans
 		if not is_trojans:
-			index_dict[info.group] = {}
+			index_dict[group] = {}
 			for mag_str in _binary_file_magnitudes:
-				index_dict[info.group][mag_str] = []
+				index_dict[group][mag_str] = []
 		else:
-			trojan_file_groups.append(info.group + "4")
-			trojan_file_groups.append(info.group + "5")
-			index_dict[info.group + "4"] = {}
-			index_dict[info.group + "5"] = {}
+			trojan_file_groups.append(group + "4")
+			trojan_file_groups.append(group + "5")
+			index_dict[group + "4"] = {}
+			index_dict[group + "5"] = {}
 			for mag_str in _binary_file_magnitudes:
-				index_dict[info.group + "4"][mag_str] = []
+				index_dict[group + "4"][mag_str] = []
 			for mag_str in _binary_file_magnitudes:
-				index_dict[info.group + "5"][mag_str] = []
+				index_dict[group + "5"][mag_str] = []
 
 	var all_criteria := {}
 	var au := UnitDefs.AU
-	for info in _asteroid_group_data:
-		var group: String = info.group
+	for row_data in _ag_data:
+		var group: String = row_data[_ag_fields.group]
 		all_criteria[group] = {
-			min_q = info.min_q / au if info.has("min_q") else 0.0,
-			max_q = info.max_q / au if info.has("max_q") else INF,
-			min_a = info.min_a / au if info.has("min_a") else 0.0,
-			max_a = info.max_a / au if info.has("max_a") else INF
+			min_q = row_data[_ag_fields.min_q] / au,
+			max_q = row_data[_ag_fields.max_q] / au,
+			min_a = row_data[_ag_fields.min_a] / au,
+			max_a = row_data[_ag_fields.max_a] / au
 		}
 	var status_index := STATUS_INTERVAL
 	for index in range(tot_indexes):
