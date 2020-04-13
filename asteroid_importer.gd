@@ -51,11 +51,11 @@ const SECULAR_RESONANT_FILE := "secres.syn" # This one in above list, but specia
 const TROJAN_PROPER_ELEMENTS_FILE := "tro.syn"
 const ASTEROID_NAMES_FILE := "discover.tab"
 const STATUS_INTERVAL := 20000
+const BINARY_FILE_MAGNITUDES := MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
 
-onready var _ag_data: Array = Global.tables.AsteroidGroupData
-onready var _ag_fields: Dictionary = Global.table_fields.AsteroidGroupFields
-onready var _binary_file_magnitudes: Array = MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
+var _tables: Dictionary = Global.tables
 
+# current processing
 var _asteroid_elements := PoolRealArray()
 var _asteroid_names := []
 var _iau_numbers := [] # -1 for unnumbered
@@ -302,6 +302,9 @@ func _make_binary_files() -> void:
 	# The binary is made using Godot function store_var(array) where array is
 	# [<n_indexes>, <N_ELEMENTS>, <_asteroid_elements>, <_asteroid_names>,
 	# <trojan_elements or null>]
+	
+	var group_data: Array = _tables.AsteroidGroupData
+	var group_fields: Dictionary = _tables.AsteroidGroupFields
 	var tot_indexes := _asteroid_names.size()
 	_update_status("tot_indexes: %s" % tot_indexes)
 	print("N_ELEMENTS: ", N_ELEMENTS)
@@ -310,37 +313,37 @@ func _make_binary_files() -> void:
 	# Store indexes by file_name where data will be stored
 	var index_dict := {}
 	var mags := []
-	for mag_str in _binary_file_magnitudes:
+	for mag_str in BINARY_FILE_MAGNITUDES:
 		mags.append(float(mag_str))
 	var trojan_group := {}
 	var trojan_file_groups := []
-	for row_data in _ag_data:
-		var is_trojans := bool(row_data[_ag_fields.trojan_of])
-		var group: String = row_data[_ag_fields.group]
+	for row_data in group_data:
+		var is_trojans := row_data[group_fields.trojan_of] as bool
+		var group: String = row_data[group_fields.group]
 		trojan_group[group] = is_trojans
 		if not is_trojans:
 			index_dict[group] = {}
-			for mag_str in _binary_file_magnitudes:
+			for mag_str in BINARY_FILE_MAGNITUDES:
 				index_dict[group][mag_str] = []
 		else:
 			trojan_file_groups.append(group + "4")
 			trojan_file_groups.append(group + "5")
 			index_dict[group + "4"] = {}
 			index_dict[group + "5"] = {}
-			for mag_str in _binary_file_magnitudes:
+			for mag_str in BINARY_FILE_MAGNITUDES:
 				index_dict[group + "4"][mag_str] = []
-			for mag_str in _binary_file_magnitudes:
+			for mag_str in BINARY_FILE_MAGNITUDES:
 				index_dict[group + "5"][mag_str] = []
 
 	var all_criteria := {}
 	var au := UnitDefs.AU
-	for row_data in _ag_data:
-		var group: String = row_data[_ag_fields.group]
+	for row_data in group_data:
+		var group: String = row_data[group_fields.group]
 		all_criteria[group] = {
-			min_q = row_data[_ag_fields.min_q] / au,
-			max_q = row_data[_ag_fields.max_q] / au,
-			min_a = row_data[_ag_fields.min_a] / au,
-			max_a = row_data[_ag_fields.max_a] / au
+			min_q = row_data[group_fields.min_q] / au if row_data[group_fields.min_q] != null else 0.0,
+			max_q = row_data[group_fields.max_q] / au if row_data[group_fields.max_q] != null else INF,
+			min_a = row_data[group_fields.min_a] / au if row_data[group_fields.min_a] != null else 0.0,
+			max_a = row_data[group_fields.max_a] / au if row_data[group_fields.max_a] != null else INF
 		}
 	var status_index := STATUS_INTERVAL
 	for index in range(tot_indexes):
@@ -348,7 +351,7 @@ func _make_binary_files() -> void:
 		var e: float = _asteroid_elements[index * N_ELEMENTS + 1]
 		var q: float = (1.0 - e) * a
 		var magnitude: float = _asteroid_elements[index * N_ELEMENTS + 7]
-		var mag_str: String = _binary_file_magnitudes[mags.bsearch(magnitude)]
+		var mag_str: String = BINARY_FILE_MAGNITUDES[mags.bsearch(magnitude)]
 		for group in all_criteria:
 			var criteria = all_criteria[group]
 			if a <= criteria.min_a or a > criteria.max_a:
