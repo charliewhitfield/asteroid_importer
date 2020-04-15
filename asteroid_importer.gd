@@ -53,7 +53,8 @@ const ASTEROID_NAMES_FILE := "discover.tab"
 const STATUS_INTERVAL := 20000
 const BINARY_FILE_MAGNITUDES := MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
 
-var _tables: Dictionary = Global.tables
+var _table_data: Dictionary = Global.table_data
+var _table_fields: Dictionary = Global.table_fields
 
 # current processing
 var _asteroid_elements := PoolRealArray()
@@ -303,8 +304,8 @@ func _make_binary_files() -> void:
 	# [<n_indexes>, <N_ELEMENTS>, <_asteroid_elements>, <_asteroid_names>,
 	# <trojan_elements or null>]
 	
-	var group_data: Array = _tables.AsteroidGroupData
-	var group_fields: Dictionary = _tables.AsteroidGroupFields
+	var group_data: Array = _table_data.asteroid_groups
+	var group_fields: Dictionary = _table_fields.asteroid_groups
 	var tot_indexes := _asteroid_names.size()
 	_update_status("tot_indexes: %s" % tot_indexes)
 	print("N_ELEMENTS: ", N_ELEMENTS)
