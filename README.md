@@ -1,10 +1,14 @@
 # README #
-I, Voyager add-on for creating asteroid binaries from source data files, mainly
-from Asteroids Dynamic Site (https://newton.spacedys.com/astdys/).
+I, Voyager addon for creating asteroid binaries from source data files, mainly
+from Asteroids Dynamic Site (https://newton.spacedys.com/astdys/). This was
+recently converted to work as an I, Voyager "addon", meaning you should be able
+to simply drop it in your project folder and maintain as a submodule. You
+need source data! See below or wait until I, Voyager release 0.0.6 (I'll add
+current source files to the release).
 
 ### Installation ###
 Add and maintain as submodule in your main project folder. The addon will add
-its own button to the splash screen Main Menu. To use, however, you will need
+its own button to the Main Menu. To use, however, you will need
 to obtain asteroid source data as described below. Add source data to user
 directory user://bigdata_source.
 
@@ -25,6 +29,7 @@ entirely new importer using different source data. (Or maybe what we need
 is here and we just need to skip "Revise Proper Orbits" step???)
 
 ### Source Files ###
+(Sorry, formatting here is all messed up. I'll fix for release...)
 astdys files https://newton.spacedys.com/astdys/ (comments are mostly copied)
 Proper elements:
 all.syn		Numbered and multiopposition asteroids; the catalog contains the
