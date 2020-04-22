@@ -22,10 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # *****************************************************************************
-#
-# Converts source file data to binaries used at runtime. See README.md.
+# Packs source file data to binaries used at runtime. See README.md. Units in
+# the source files are: au, deg, deg/yr (last update, but verify!). We convert
+# these to au, rad, rad/yr in the packed binaries. Convert from these when
+# importing.
 
 extends PopupPanel
+
+const math := preload("res://ivoyager/static/math.gd")
+const file_utils := preload("res://ivoyager/static/file_utils.gd")
+
 const SCENE := "res://asteroid_importer/asteroid_importer.tscn"
 const EXTENSION_NAME := "AsteroidImporter"
 const EXTENSION_VERSION := "dev"
@@ -45,10 +51,12 @@ const SECULAR_RESONANT_FILE := "secres.syn" # This one in above list, but specia
 const TROJAN_PROPER_ELEMENTS_FILE := "tro.syn"
 const ASTEROID_NAMES_FILE := "discover.tab"
 const STATUS_INTERVAL := 20000
+const BINARY_FILE_MAGNITUDES := MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
 
-onready var _asteroid_group_data: Array = Global.table_data.asteroid_group_data
-onready var _binary_file_magnitudes: Array = MinorBodiesBuilder.BINARY_FILE_MAGNITUDES
+var _table_data: Dictionary = Global.table_data
+var _table_fields: Dictionary = Global.table_fields
 
+# current processing
 var _asteroid_elements := PoolRealArray()
 var _asteroid_names := []
 var _iau_numbers := [] # -1 for unnumbered
@@ -75,10 +83,10 @@ func extension_init() -> void:
 	Global.connect("main_inited", self, "_on_main_inited")
 
 func _on_objects_instantiated() -> void:
-	Global.objects.MainMenu.make_button("Ast. Import", 290, true, false, self, "_open")
+	Global.program.MainMenu.make_button("Ast. Import", 290, true, false, self, "_open")
 
 func _on_main_inited() -> void:
-	Global.objects.GUITop.add_child(self)
+	Global.program.GUITop.add_child(self)
 
 func _ready() -> void:
 	var layout_index := 0
@@ -106,7 +114,7 @@ func _ready() -> void:
 	$VBox/Grid.add_child(close_button)
 
 func _open() -> void:
-	Global.objects.Main.require_stop(self)
+	Global.program.Main.require_stop(self)
 	popup()
 
 func _run_function(layout_index: int) -> void:
@@ -209,10 +217,10 @@ func _revise_proper() -> void:
 				else:
 					mag_str = "99"
 			var magnitude := float(mag_str)
-			var proper_a := Math.au2km(float(line_array[2]))
+			var proper_a := float(line_array[2]) # in au
 			var proper_e := float(line_array[3])
-			var proper_i := asin(float(line_array[4]))
-			var proper_n := deg2rad(float(line_array[5])) / 365.25 # deg/yr -> rad/day
+			var proper_i := asin(float(line_array[4])) # file has sin(i)
+			var proper_n := deg2rad(float(line_array[5])) # now rad/yr
 			_asteroid_elements[index * N_ELEMENTS] = proper_a
 			if not secular_resonance:
 				_asteroid_elements[index * N_ELEMENTS + 1] = proper_e
@@ -266,11 +274,11 @@ func _revise_trojans() -> void:
 			else:
 				mag_str = "99"
 		var magnitude := float(mag_str)
-		var d := Math.au2km(float(line_array[2]))
-		var D := deg2rad(float(line_array[3]))
-		var f := deg2rad(float(line_array[4])) / 365.25 # deg/yr -> rad/day
+		var d := float(line_array[2]) # au
+		var D := deg2rad(float(line_array[3])) # deg -> rad
+		var f := deg2rad(float(line_array[4])) # deg/y -> rad/y
 		var proper_e := float(line_array[5])
-		var proper_i := asin(float(line_array[7]))
+		var proper_i := asin(float(line_array[7])) # file has sin(i)
 		var l_point: String = line_array[9] # either "4" or "5"
 		# Regular propers
 		_asteroid_elements[index * N_ELEMENTS + 1] = proper_e
@@ -295,6 +303,9 @@ func _make_binary_files() -> void:
 	# The binary is made using Godot function store_var(array) where array is
 	# [<n_indexes>, <N_ELEMENTS>, <_asteroid_elements>, <_asteroid_names>,
 	# <trojan_elements or null>]
+	
+	var group_data: Array = _table_data.asteroid_groups
+	var group_fields: Dictionary = _table_fields.asteroid_groups
 	var tot_indexes := _asteroid_names.size()
 	_update_status("tot_indexes: %s" % tot_indexes)
 	print("N_ELEMENTS: ", N_ELEMENTS)
@@ -303,35 +314,37 @@ func _make_binary_files() -> void:
 	# Store indexes by file_name where data will be stored
 	var index_dict := {}
 	var mags := []
-	for mag_str in _binary_file_magnitudes:
+	for mag_str in BINARY_FILE_MAGNITUDES:
 		mags.append(float(mag_str))
 	var trojan_group := {}
 	var trojan_file_groups := []
-	for info in _asteroid_group_data:
-		var is_trojans: bool = info.has("trojan_of")
-		trojan_group[info.group] = is_trojans
+	for row_data in group_data:
+		var is_trojans := row_data[group_fields.trojan_of] as bool
+		var group: String = row_data[group_fields.group]
+		trojan_group[group] = is_trojans
 		if not is_trojans:
-			index_dict[info.group] = {}
-			for mag_str in _binary_file_magnitudes:
-				index_dict[info.group][mag_str] = []
+			index_dict[group] = {}
+			for mag_str in BINARY_FILE_MAGNITUDES:
+				index_dict[group][mag_str] = []
 		else:
-			trojan_file_groups.append(info.group + "4")
-			trojan_file_groups.append(info.group + "5")
-			index_dict[info.group + "4"] = {}
-			index_dict[info.group + "5"] = {}
-			for mag_str in _binary_file_magnitudes:
-				index_dict[info.group + "4"][mag_str] = []
-			for mag_str in _binary_file_magnitudes:
-				index_dict[info.group + "5"][mag_str] = []
+			trojan_file_groups.append(group + "4")
+			trojan_file_groups.append(group + "5")
+			index_dict[group + "4"] = {}
+			index_dict[group + "5"] = {}
+			for mag_str in BINARY_FILE_MAGNITUDES:
+				index_dict[group + "4"][mag_str] = []
+			for mag_str in BINARY_FILE_MAGNITUDES:
+				index_dict[group + "5"][mag_str] = []
 
 	var all_criteria := {}
-	for info in _asteroid_group_data:
-		var group: String = info.group
+	var au := UnitDefs.AU
+	for row_data in group_data:
+		var group: String = row_data[group_fields.group]
 		all_criteria[group] = {
-			min_q = info.min_q if info.has("min_q") else 0.0,
-			max_q = info.max_q if info.has("max_q") else INF,
-			min_a = info.min_a if info.has("min_a") else 0.0,
-			max_a = info.max_a if info.has("max_a") else INF
+			min_q = row_data[group_fields.min_q] / au if row_data[group_fields.min_q] != null else 0.0,
+			max_q = row_data[group_fields.max_q] / au if row_data[group_fields.max_q] != null else INF,
+			min_a = row_data[group_fields.min_a] / au if row_data[group_fields.min_a] != null else 0.0,
+			max_a = row_data[group_fields.max_a] / au if row_data[group_fields.max_a] != null else INF
 		}
 	var status_index := STATUS_INTERVAL
 	for index in range(tot_indexes):
@@ -339,7 +352,7 @@ func _make_binary_files() -> void:
 		var e: float = _asteroid_elements[index * N_ELEMENTS + 1]
 		var q: float = (1.0 - e) * a
 		var magnitude: float = _asteroid_elements[index * N_ELEMENTS + 7]
-		var mag_str: String = _binary_file_magnitudes[mags.bsearch(magnitude)]
+		var mag_str: String = BINARY_FILE_MAGNITUDES[mags.bsearch(magnitude)]
 		for group in all_criteria:
 			var criteria = all_criteria[group]
 			if a <= criteria.min_a or a > criteria.max_a:
@@ -366,7 +379,7 @@ func _make_binary_files() -> void:
 	
 	# Write binaries
 	print("Writing binaries to ", WRITE_BINARIES_DIR)
-	FileHelper.make_or_clear_dir(WRITE_BINARIES_DIR)
+	file_utils.make_or_clear_dir(WRITE_BINARIES_DIR)
 	var asteroid_group := AsteroidGroup.new()
 	for file_group in index_dict:
 		var is_trojans: bool = trojan_file_groups.has(file_group)
@@ -423,7 +436,7 @@ func _start_over() -> void:
 
 func _close() -> void:
 	hide()
-	Global.objects.Main.allow_run(self)
+	Global.program.Main.allow_run(self)
 
 func _update_status(message) -> void:
 	yield(get_tree(), "idle_frame")
@@ -458,7 +471,7 @@ func _read_astdys_cat_file(data_file: String) -> void:
 		astdys2_name = astdys2_name.replace("'", "")
 		_astdys2_lookup[astdys2_name] = _index
 		_asteroid_names.append(astdys2_name)
-		_asteroid_elements.append(Math.au2km(float(line_array[2]))) # a
+		_asteroid_elements.append(float(line_array[2])) # a (in au)
 		_asteroid_elements.append(float(line_array[3])) # e
 		_asteroid_elements.append(deg2rad(float(line_array[4]))) # i
 		_asteroid_elements.append(deg2rad(float(line_array[5]))) # Om
