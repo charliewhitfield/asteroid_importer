@@ -1,0 +1,7 @@
+# ignore:
+~*
+*.translation
+\.import/
+source_data*/
+export/
+export_presets.cfg
